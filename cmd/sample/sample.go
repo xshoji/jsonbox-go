@@ -8,6 +8,7 @@ import (
 	"github.com/xshoji/jsonbox-go/jsonboxgo"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -29,7 +30,7 @@ func main() {
 		log.Fatal("Environment variable \"BOX_ID\" is not defined.")
 	}
 	collection := "users"
-	client := jsonboxgo.NewClient(baseUrl, boxId)
+	client := jsonboxgo.NewClient(baseUrl, boxId, http.DefaultClient)
 
 	user := User{
 		Name:     "taro_" + randomString(),
