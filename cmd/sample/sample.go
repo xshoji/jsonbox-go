@@ -48,7 +48,7 @@ func main() {
 	json.Unmarshal(result, &createdUser)
 
 	// ReadAll
-	result = client.ReadAll("users")
+	result = client.ReadAll(collection)
 	fmt.Println(">>> ReadAll")
 	fmt.Println(string(result))
 	fmt.Println("")
@@ -62,7 +62,7 @@ func main() {
 	// Update
 	createdUser.Name = "updated_" + randomString()
 	createdUser.Age = randomNumber()
-	result, _ = client.Update("users", createdUser.Id, createdUser)
+	result, _ = client.Update(collection, createdUser.Id, createdUser)
 	fmt.Println(">>> Update")
 	fmt.Println(string(result))
 	fmt.Println("")
@@ -74,13 +74,13 @@ func main() {
 	fmt.Println("")
 
 	// Delete
-	result, _ = client.Delete("users", createdUser.Id)
+	result, _ = client.Delete(collection, createdUser.Id)
 	fmt.Println(">>> Delete")
 	fmt.Println(string(result))
 	fmt.Println("")
 
 	// Read by recordId
-	_, found := client.Read("users", createdUser.Id)
+	_, found := client.Read(collection, createdUser.Id)
 	fmt.Println(">>> Read (Deleted)")
 	fmt.Println(found)
 	fmt.Println("")
