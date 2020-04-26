@@ -40,7 +40,6 @@ func (c clientImpl) Create(collection string, object interface{}) []byte {
 	if err != nil {
 		log.Fatal("Create failed. | ", err)
 	}
-	log.Println(resp.Status)
 	return readAsBytes(resp)
 }
 
@@ -50,7 +49,6 @@ func (c clientImpl) ReadAll(collection string) []byte {
 	if err != nil {
 		log.Fatal("ReadAll failed. | ", err)
 	}
-	log.Println(resp.Status)
 	return readAsBytes(resp)
 }
 
