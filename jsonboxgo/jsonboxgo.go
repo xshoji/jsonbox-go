@@ -23,6 +23,7 @@ type clientImpl struct {
 	baseUrlFull string
 }
 
+// Create new jsonbox-go client
 func NewClient(baseUrl string, boxId string) Client {
 	client := clientImpl{
 		baseUrl:     baseUrl,
@@ -32,6 +33,7 @@ func NewClient(baseUrl string, boxId string) Client {
 	return client
 }
 
+// Create
 func (c clientImpl) Create(collection string, object interface{}) []byte {
 	requestBody := toJsonString(object)
 	resp, err := http.Post(c.baseUrlFull+handleSuffixAndPrefix(collection), "application/json", strings.NewReader(requestBody))
@@ -42,6 +44,7 @@ func (c clientImpl) Create(collection string, object interface{}) []byte {
 	return readAsBytes(resp)
 }
 
+// Read all
 func (c clientImpl) ReadAll(collection string) []byte {
 	resp, err := http.Get(c.baseUrlFull + handleSuffixAndPrefix(collection))
 	if err != nil {
@@ -51,6 +54,19 @@ func (c clientImpl) ReadAll(collection string) []byte {
 	return readAsBytes(resp)
 }
 
+// Read one
+func (c clientImpl) Read(collection string, recordId string) (respondedBody []byte, found bool) {
+	resp, err := http.Get(c.baseUrlFull + handleSuffixAndPrefix(collection) + handleSuffixAndPrefix(recordId))
+	if err != nil {
+		log.Fatal("Read failed. | ", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, false
+	}
+	return readAsBytes(resp), true
+}
+
+// Update
 func (c clientImpl) Update(collection string, recordId string, object interface{}) (respondedBody []byte, updated bool) {
 	resp, err := c.doRequest("PUT", collection, recordId, object)
 	if err != nil {
@@ -62,21 +78,11 @@ func (c clientImpl) Update(collection string, recordId string, object interface{
 	return readAsBytes(resp), true
 }
 
+// Delete
 func (c clientImpl) Delete(collection string, recordId string) (respondedBody []byte, deleted bool) {
 	resp, err := c.doRequest("DELETE", collection, recordId, nil)
 	if err != nil {
 		log.Fatal("Delete failed. | ", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, false
-	}
-	return readAsBytes(resp), true
-}
-
-func (c clientImpl) Read(collection string, recordId string) (respondedBody []byte, found bool) {
-	resp, err := http.Get(c.baseUrlFull + handleSuffixAndPrefix(collection) + handleSuffixAndPrefix(recordId))
-	if err != nil {
-		log.Fatal("Read failed. | ", err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, false
