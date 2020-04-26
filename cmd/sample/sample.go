@@ -54,7 +54,7 @@ func main() {
 	fmt.Println("")
 
 	// Read by recordId
-	result = client.Read(collection, createdUser.Id)
+	result, _ = client.Read(collection, createdUser.Id)
 	fmt.Println(">>> Read")
 	fmt.Println(string(result))
 	fmt.Println("")
@@ -62,27 +62,27 @@ func main() {
 	// Update
 	createdUser.Name = "updated_" + randomString()
 	createdUser.Age = randomNumber()
-	result = client.Update("users", createdUser.Id, createdUser)
+	result, _ = client.Update("users", createdUser.Id, createdUser)
 	fmt.Println(">>> Update")
 	fmt.Println(string(result))
 	fmt.Println("")
 
 	// Read by recordId
-	result = client.Read(collection, createdUser.Id)
+	result, _ = client.Read(collection, createdUser.Id)
 	fmt.Println(">>> Read (Updated)")
 	fmt.Println(string(result))
 	fmt.Println("")
 
 	// Delete
-	result = client.Delete("users", createdUser.Id)
+	result, _ = client.Delete("users", createdUser.Id)
 	fmt.Println(">>> Delete")
 	fmt.Println(string(result))
 	fmt.Println("")
 
 	// Read by recordId
-	result = client.Read("users", createdUser.Id)
+	_, found := client.Read("users", createdUser.Id)
 	fmt.Println(">>> Read (Deleted)")
-	fmt.Println(string(result))
+	fmt.Println(found)
 	fmt.Println("")
 }
 

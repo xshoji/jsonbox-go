@@ -2,6 +2,7 @@ package jsonboxgo
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,10 +11,10 @@ import (
 
 type Client interface {
 	Create(string, interface{}) []byte
-	Read(string, string) []byte
+	Read(string, string) ([]byte, bool)
 	ReadAll(string) []byte
-	Update(string, string, interface{}) []byte
-	Delete(string, string) []byte
+	Update(string, string, interface{}) ([]byte, bool)
+	Delete(string, string) ([]byte, bool)
 }
 
 type clientImpl struct {
@@ -37,6 +38,7 @@ func (c clientImpl) Create(collection string, object interface{}) []byte {
 	if err != nil {
 		log.Fatal("Create failed. | ", err)
 	}
+	log.Println(resp.Status)
 	return readAsBytes(resp)
 }
 
@@ -45,42 +47,55 @@ func (c clientImpl) ReadAll(collection string) []byte {
 	if err != nil {
 		log.Fatal("ReadAll failed. | ", err)
 	}
+	log.Println(resp.Status)
 	return readAsBytes(resp)
 }
 
-func (c clientImpl) Update(collection string, recordId string, object interface{}) []byte {
-	requestBody := toJsonString(object)
-	req, err := http.NewRequest("PUT", c.baseUrlFull+handleSuffixAndPrefix(collection)+handleSuffixAndPrefix(recordId), strings.NewReader(requestBody))
-	if err != nil {
-		log.Fatal(`http.NewRequest("PUT") failed. | `, err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+func (c clientImpl) Update(collection string, recordId string, object interface{}) (respondedBody []byte, updated bool) {
+	resp, err := c.doRequest("PUT", collection, recordId, object)
 	if err != nil {
 		log.Fatal("Update failed. | ", err)
 	}
-	return readAsBytes(resp)
+	if resp.StatusCode != http.StatusOK {
+		return nil, false
+	}
+	return readAsBytes(resp), true
 }
 
-func (c clientImpl) Delete(collection string, recordId string) []byte {
-	req, err := http.NewRequest("DELETE", c.baseUrlFull+handleSuffixAndPrefix(collection)+handleSuffixAndPrefix(recordId), nil)
-	if err != nil {
-		log.Fatal(`http.NewRequest("DELETE") failed. | `, err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+func (c clientImpl) Delete(collection string, recordId string) (respondedBody []byte, deleted bool) {
+	resp, err := c.doRequest("DELETE", collection, recordId, nil)
 	if err != nil {
 		log.Fatal("Delete failed. | ", err)
 	}
-	return readAsBytes(resp)
+	if resp.StatusCode != http.StatusOK {
+		return nil, false
+	}
+	return readAsBytes(resp), true
 }
 
-func (c clientImpl) Read(collection string, recordId string) []byte {
+func (c clientImpl) Read(collection string, recordId string) (respondedBody []byte, found bool) {
 	resp, err := http.Get(c.baseUrlFull + handleSuffixAndPrefix(collection) + handleSuffixAndPrefix(recordId))
 	if err != nil {
 		log.Fatal("Read failed. | ", err)
 	}
-	return readAsBytes(resp)
+	if resp.StatusCode != http.StatusOK {
+		return nil, false
+	}
+	return readAsBytes(resp), true
+}
+
+func (c clientImpl) doRequest(httpMethod string, collection string, recordId string, object interface{}) (*http.Response, error) {
+	var body io.Reader = nil
+	if object != nil {
+		requestBody := toJsonString(object)
+		body = strings.NewReader(requestBody)
+	}
+	req, err := http.NewRequest(httpMethod, c.baseUrlFull+handleSuffixAndPrefix(collection)+handleSuffixAndPrefix(recordId), body)
+	if err != nil {
+		log.Fatal(`http.NewRequest("`+httpMethod+`") failed. | `, err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	return http.DefaultClient.Do(req)
 }
 
 func readAsBytes(resp *http.Response) []byte {
