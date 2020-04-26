@@ -15,7 +15,7 @@ boxId := "box_xxxxxxxxxx"
 client := jsonboxgo.NewClient(baseUrl, boxId)
 ```
 
-#### Create object
+#### Create record
 
 ```
 user := struct {
@@ -34,6 +34,7 @@ result := client.Create(collection, user)
 #### Read all records
 
 ```
+collection := "users"
 result := client.ReadAll(collection)
 ```
 
@@ -56,6 +57,7 @@ result, updated := client.Update(collection, user.Id, user)
 #### Delete
 
 ```
+collection := "users"
 result, deleted := client.Delete(collection, createdUser.Id)
 ```
 
