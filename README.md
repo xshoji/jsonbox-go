@@ -98,9 +98,14 @@ fmt.Println(string(result))
 // {"message":"Record removed."}
 ```
 
-## Demo
+## Test
+
+```
+go test -v ./...
+```
+
+## Sample
 
 ```
 go run cmd/sample/sample.go
 ```
-
