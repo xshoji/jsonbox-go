@@ -7,6 +7,10 @@ jsonbox-go is the wrapper library in order to use jsonbox as easy.
 
 ## Usage
 
+```
+go get "github.com/xshoji/jsonbox-go"
+```
+
 #### Create new client
 
 ```
@@ -29,6 +33,13 @@ user := struct {
 }
 collection := "users"
 result := client.Create(collection, user)
+fmt.Println(string(result))
+// {
+//   "_id": "5ea6e8c543f5c4001710132b",
+//   "name": "taro",
+//   "age": 100,
+//   "_createdOn": "2020-04-27T14:14:29.843Z"
+// }
 ```
 
 #### Read all records
@@ -36,6 +47,15 @@ result := client.Create(collection, user)
 ```
 collection := "users"
 result := client.ReadAll(collection)
+fmt.Println(string(result))
+// [
+//   {
+//     "_id": "5ea6e8c543f5c4001710132b",
+//     "name": "taro",
+//     "age": 100,
+//     "_createdOn": "2020-04-27T14:14:29.843Z"
+//   }
+// ]
 ```
 
 #### Read one by recordId
@@ -43,6 +63,13 @@ result := client.ReadAll(collection)
 ```
 collection := "users"
 result, found := client.Read(collection, user.Id)
+fmt.Println(string(result))
+// {
+//   "_id": "5ea6e8c543f5c4001710132b",
+//   "name": "taro",
+//   "age": 100,
+//   "_createdOn": "2020-04-27T14:14:29.843Z"
+// }
 ```
 
 #### Update
@@ -52,13 +79,23 @@ user.Name = "updated"
 user.Age = 24
 collection := "users"
 result, updated := client.Update(collection, user.Id, user)
+fmt.Println(string(result))
+// {
+//   "_id": "5ea6e8c543f5c4001710132b",
+//   "name": "updated",
+//   "age": 24,
+//   "_createdOn": "2020-04-27T14:14:29.843Z",
+//   "_updatedOn": "2020-04-27T14:14:31.010Z"
+// }
 ```
 
 #### Delete
 
 ```
 collection := "users"
-result, deleted := client.Delete(collection, createdUser.Id)
+result, deleted := client.Delete(collection, user.Id)
+fmt.Println(string(result))
+// {"message":"Record removed."}
 ```
 
 ## Demo

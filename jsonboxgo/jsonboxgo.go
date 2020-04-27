@@ -75,7 +75,7 @@ func (c defaultClient) Update(collection string, recordId string, object interfa
 	if resp.StatusCode != http.StatusOK {
 		return nil, false
 	}
-	return readAsBytes(resp), true
+	return c.Read(collection, recordId)
 }
 
 // Delete

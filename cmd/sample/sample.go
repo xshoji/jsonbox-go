@@ -68,12 +68,6 @@ func main() {
 	fmt.Println(string(result))
 	fmt.Println("")
 
-	// Read by recordId
-	result, _ = client.Read(collection, createdUser.Id)
-	fmt.Println(">>> Read (Updated)")
-	fmt.Println(string(result))
-	fmt.Println("")
-
 	// Delete
 	result, _ = client.Delete(collection, createdUser.Id)
 	fmt.Println(">>> Delete")
