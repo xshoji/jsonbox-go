@@ -1,6 +1,6 @@
 ## jsonbox-go
 
-jsonbox-go is the wrapper library in order to use jsonbox as easy.
+jsonbox-go is the wrapper library in order to use jsonbox.io as easy.
 
 > jsonbox.io ｜ A Free HTTP based JSON storage  
 > https://jsonbox.io/
@@ -13,7 +13,7 @@ go get "github.com/xshoji/jsonbox-go"
 
 #### Create new client
 
-```
+```go
 baseUrl := "https://jsonbox.io/"
 boxId := "box_xxxxxxxxxx"
 client := jsonboxgo.NewClient(baseUrl, boxId)
@@ -21,7 +21,7 @@ client := jsonboxgo.NewClient(baseUrl, boxId)
 
 #### Create record
 
-```
+```go
 user := struct {
 	Id        string `json:"_id,omitempty"`
 	Name      string `json:"name,omitempty"`
@@ -44,7 +44,7 @@ fmt.Println(string(result))
 
 #### Read all records
 
-```
+```go
 collection := "users"
 result := client.ReadAll(collection)
 fmt.Println(string(result))
@@ -60,7 +60,7 @@ fmt.Println(string(result))
 
 #### Read one by recordId
 
-```
+```go
 collection := "users"
 result, found := client.Read(collection, user.Id)
 fmt.Println(string(result))
@@ -74,7 +74,7 @@ fmt.Println(string(result))
 
 #### Update
 
-```
+```go
 user.Name = "updated"
 user.Age = 24
 collection := "users"
@@ -91,7 +91,7 @@ fmt.Println(string(result))
 
 #### Delete
 
-```
+```go
 collection := "users"
 result, deleted := client.Delete(collection, user.Id)
 fmt.Println(string(result))
