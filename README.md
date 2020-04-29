@@ -119,25 +119,22 @@ fmt.Println(string(result))
 //   {
 //     "_id": "5ea9bc0225ec0a0017640226",
 //     "name": "taro_95ad1144ec3fcfb628234f6eeddc8e9fde02126c1ab0b0f163a79a3d8910c666",
-//     "country": JP,
+//     "country": "JP",
 //     "age": 40,
-//     "language": "JP",
 //     "_createdOn": "2020-04-29T17:40:18.986Z"
 //   },
 //   {
 //     "_id": "5ea9bbec25ec0a0017640222",
 //     "name": "taro_e3d68d50f4399a0b21df5ae4ca71ad932e3d87f4c274d2e3334350f47b2c887b",
-//     "country": JP,
+//     "country": "JP",
 //     "age": 44,
-//     "language": "JP",
 //     "_createdOn": "2020-04-29T17:39:56.906Z"
 //   },
 //   {
 //     "_id": "5ea9bce825ec0a001764022a",
 //     "name": "taro_ccd90e826262cffb6c5e6be6993c7752da008a16f6811ba53f3aad19e9cc54d1",
-//     "country": JP,
+//     "country": "JP",
 //     "age": 44,
-//     "language": "JP",
 //     "_createdOn": "2020-04-29T17:44:08.839Z"
 //   }
 // ]
