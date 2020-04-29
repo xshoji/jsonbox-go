@@ -190,3 +190,51 @@ func TestRead(t *testing.T) {
 		})
 	}
 }
+
+func TestReadAll(t *testing.T) {
+	// test cases
+	InputBaseUrl := "https://test.com"
+	InputBoxId := "box_test"
+	testCases := map[string]struct {
+		InputCollection          string
+		InputRespondedHttpStatus int
+		InputRespondedBody       string
+		ExpectedRespondedBody    string
+		ExpectedUrlFull          string
+	}{
+		"Found case.": {
+			InputCollection:          "users",
+			InputRespondedHttpStatus: 200,
+			InputRespondedBody:       `[{"_id":"id001","name":"taro"}]`,
+			ExpectedRespondedBody:    `[{"_id":"id001","name":"taro"}]`,
+			ExpectedUrlFull:          "https://test.com/box_test",
+		},
+		"Not found case.": {
+			InputCollection:          "/users",
+			InputRespondedHttpStatus: 200,
+			InputRespondedBody:       `[]`,
+			ExpectedRespondedBody:    `[]`,
+			ExpectedUrlFull:          "https://test.com/box_test",
+		},
+	}
+
+	// run
+	for testCase, param := range testCases {
+		t.Run(testCase, func(t *testing.T) {
+			mockHttpClient := CreateNewTestClient(param.InputRespondedHttpStatus, param.InputRespondedBody)
+			client := NewClient(InputBaseUrl, InputBoxId, mockHttpClient)
+			defaultClient, _ := client.(DefaultClient)
+			result := defaultClient.ReadAll(param.InputCollection)
+			actual := string(result)
+			expectedBody := param.ExpectedRespondedBody
+			if actual != expectedBody {
+				t.Errorf("  Failed: actual -> %v(%T), expectedBody -> %v(%T)\n", actual, actual, expectedBody, expectedBody)
+			}
+			actual = defaultClient.baseUrlFull
+			expected := param.ExpectedUrlFull
+			if actual != expected {
+				t.Errorf("  Failed: actual -> %v(%T), expected -> %v(%T)\n", actual, actual, expected, expected)
+			}
+		})
+	}
+}

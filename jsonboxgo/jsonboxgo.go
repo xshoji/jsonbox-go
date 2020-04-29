@@ -47,7 +47,7 @@ func (c DefaultClient) Create(collection string, object interface{}) []byte {
 
 // Read all
 func (c DefaultClient) ReadAll(collection string) []byte {
-	resp, err := http.Get(c.baseUrlFull + handleSuffixAndPrefix(collection))
+	resp, err := c.doRequest("GET", collection, "", nil)
 	if err != nil {
 		log.Fatal("ReadAll failed. | ", err)
 	}
