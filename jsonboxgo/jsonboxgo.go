@@ -26,96 +26,6 @@ type DefaultClient struct {
 	httpClient  *http.Client
 }
 
-type QueryBuilder interface {
-	Limit(int) QueryBuilder
-	Offset(int) QueryBuilder
-	SortAsc(string) QueryBuilder
-	SortDesc(string) QueryBuilder
-	AddEqual(string, string) QueryBuilder
-	AddGreaterThan(string, string) QueryBuilder
-	AddGreaterThanOrEqual(string, string) QueryBuilder
-	AddLessThan(string, string) QueryBuilder
-	AddLessThanOrEqual(string, string) QueryBuilder
-	Build() string
-}
-
-type DefaultQueryBuilder struct {
-	queries []string
-	filters []string
-}
-
-func (d *DefaultQueryBuilder) Limit(limit int) QueryBuilder {
-	d.queries = append(d.queries, `limit=`+strconv.Itoa(limit))
-	return d
-}
-
-func (d *DefaultQueryBuilder) Offset(offset int) QueryBuilder {
-	d.queries = append(d.queries, `offset=`+strconv.Itoa(offset))
-	return d
-}
-
-func (d *DefaultQueryBuilder) SortAsc(sort string) QueryBuilder {
-	d.queries = append(d.queries, `sort=`+sort)
-	return d
-}
-
-func (d *DefaultQueryBuilder) SortDesc(sort string) QueryBuilder {
-	d.queries = append(d.queries, `sort=-`+sort)
-	return d
-}
-
-func (d *DefaultQueryBuilder) AddGreaterThan(field string, value string) QueryBuilder {
-	return d.addFilter(field, ":>", value)
-}
-
-func (d *DefaultQueryBuilder) AddLessThan(field string, value string) QueryBuilder {
-	return d.addFilter(field, ":<", value)
-}
-
-func (d *DefaultQueryBuilder) AddGreaterThanOrEqual(field string, value string) QueryBuilder {
-	return d.addFilter(field, ":>=", value)
-}
-
-func (d *DefaultQueryBuilder) AddLessThanOrEqual(field string, value string) QueryBuilder {
-	return d.addFilter(field, ":<=", value)
-}
-
-func (d *DefaultQueryBuilder) AddEqual(field string, value string) QueryBuilder {
-	return d.addFilter(field, ":=", value)
-}
-
-func (d *DefaultQueryBuilder) addFilter(name string, operator string, value string) QueryBuilder {
-	filterQuery := ""
-	if len(d.filters) == 0 {
-		filterQuery += "q="
-	}
-	d.filters = append(d.filters, filterQuery+name+operator+value)
-	return d
-}
-
-func (d *DefaultQueryBuilder) Build() string {
-	query := ""
-	if len(d.queries) > 0 {
-		query += strings.Join(d.queries, `&`)
-	}
-	if len(d.filters) > 0 {
-		if query != "" {
-			query += "&"
-		}
-		query += strings.Join(d.filters, `,`)
-	}
-	return "?" + query
-}
-
-// Create new jsonbox-go QueryBuilder
-func NewQueryBuilder() QueryBuilder {
-	builder := &DefaultQueryBuilder{
-		queries: make([]string, 0),
-		filters: make([]string, 0),
-	}
-	return builder
-}
-
 // Create new jsonbox-go Client
 func NewClient(baseUrl string, boxId string, httpClient *http.Client) Client {
 	client := DefaultClient{
@@ -249,4 +159,94 @@ func handlePrefix(char string) string {
 // Adjust suffix and prefix
 func handleSuffixAndPrefix(char string) string {
 	return handlePrefix(handleSuffix(char))
+}
+
+type QueryBuilder interface {
+	Limit(int) QueryBuilder
+	Offset(int) QueryBuilder
+	SortAsc(string) QueryBuilder
+	SortDesc(string) QueryBuilder
+	AddEqual(string, string) QueryBuilder
+	AddGreaterThan(string, string) QueryBuilder
+	AddGreaterThanOrEqual(string, string) QueryBuilder
+	AddLessThan(string, string) QueryBuilder
+	AddLessThanOrEqual(string, string) QueryBuilder
+	Build() string
+}
+
+type DefaultQueryBuilder struct {
+	queries []string
+	filters []string
+}
+
+// Create new jsonbox-go QueryBuilder
+func NewQueryBuilder() QueryBuilder {
+	builder := &DefaultQueryBuilder{
+		queries: make([]string, 0),
+		filters: make([]string, 0),
+	}
+	return builder
+}
+
+func (d *DefaultQueryBuilder) Limit(limit int) QueryBuilder {
+	d.queries = append(d.queries, `limit=`+strconv.Itoa(limit))
+	return d
+}
+
+func (d *DefaultQueryBuilder) Offset(offset int) QueryBuilder {
+	d.queries = append(d.queries, `offset=`+strconv.Itoa(offset))
+	return d
+}
+
+func (d *DefaultQueryBuilder) SortAsc(sort string) QueryBuilder {
+	d.queries = append(d.queries, `sort=`+sort)
+	return d
+}
+
+func (d *DefaultQueryBuilder) SortDesc(sort string) QueryBuilder {
+	d.queries = append(d.queries, `sort=-`+sort)
+	return d
+}
+
+func (d *DefaultQueryBuilder) AddGreaterThan(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":>", value)
+}
+
+func (d *DefaultQueryBuilder) AddLessThan(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":<", value)
+}
+
+func (d *DefaultQueryBuilder) AddGreaterThanOrEqual(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":>=", value)
+}
+
+func (d *DefaultQueryBuilder) AddLessThanOrEqual(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":<=", value)
+}
+
+func (d *DefaultQueryBuilder) AddEqual(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":=", value)
+}
+
+func (d *DefaultQueryBuilder) addFilter(name string, operator string, value string) QueryBuilder {
+	filterQuery := ""
+	if len(d.filters) == 0 {
+		filterQuery += "q="
+	}
+	d.filters = append(d.filters, filterQuery+name+operator+value)
+	return d
+}
+
+func (d *DefaultQueryBuilder) Build() string {
+	query := ""
+	if len(d.queries) > 0 {
+		query += strings.Join(d.queries, `&`)
+	}
+	if len(d.filters) > 0 {
+		if query != "" {
+			query += "&"
+		}
+		query += strings.Join(d.filters, `,`)
+	}
+	return "?" + query
 }
