@@ -149,5 +149,6 @@ go test -v ./...
 ## Sample
 
 ```
-go run cmd/sample/sample.go
+go run cmd/sample/client/sample.go
+go run cmd/sample/querybuilder/sample.go
 ```
