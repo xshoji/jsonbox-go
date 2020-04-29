@@ -111,8 +111,8 @@ result := client.ReadByQuery(
 		Offset(1).
 		Limit(3).
 		SortAsc("age").
-		AddEqual("country", "JP").
-		AddGreaterThanOrEqual("age", "40")
+		AndEqual("country", "JP").
+		AndGreaterThanOrEqual("age", "40"),
 )
 fmt.Println(string(result))
 // [
