@@ -18,7 +18,7 @@ type Client interface {
 	Delete(string, string) ([]byte, bool)
 }
 
-type defaultClient struct {
+type DefaultClient struct {
 	baseUrl     string
 	boxId       string
 	baseUrlFull string
@@ -27,7 +27,7 @@ type defaultClient struct {
 
 // Create new jsonbox-go client
 func NewClient(baseUrl string, boxId string, httpClient *http.Client) Client {
-	client := defaultClient{
+	client := DefaultClient{
 		baseUrl:     baseUrl,
 		boxId:       boxId,
 		baseUrlFull: handleSuffix(baseUrl) + handleSuffixAndPrefix(boxId),
@@ -37,7 +37,7 @@ func NewClient(baseUrl string, boxId string, httpClient *http.Client) Client {
 }
 
 // Create
-func (c defaultClient) Create(collection string, object interface{}) []byte {
+func (c DefaultClient) Create(collection string, object interface{}) []byte {
 	resp, err := c.doRequest("POST", collection, "", object)
 	if err != nil {
 		log.Fatal("Create failed. | ", err)
@@ -46,7 +46,7 @@ func (c defaultClient) Create(collection string, object interface{}) []byte {
 }
 
 // Read all
-func (c defaultClient) ReadAll(collection string) []byte {
+func (c DefaultClient) ReadAll(collection string) []byte {
 	resp, err := http.Get(c.baseUrlFull + handleSuffixAndPrefix(collection))
 	if err != nil {
 		log.Fatal("ReadAll failed. | ", err)
@@ -55,19 +55,25 @@ func (c defaultClient) ReadAll(collection string) []byte {
 }
 
 // Read one
-func (c defaultClient) Read(collection string, recordId string) (respondedBody []byte, found bool) {
-	resp, err := http.Get(c.baseUrlFull + handleSuffixAndPrefix(collection) + handleSuffixAndPrefix(recordId))
+func (c DefaultClient) Read(collection string, recordId string) (respondedBody []byte, found bool) {
+	resp, err := c.doRequest("GET", collection, recordId, nil)
 	if err != nil {
 		log.Fatal("Read failed. | ", err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, false
 	}
-	return readAsBytes(resp), true
+	bytes := readAsBytes(resp)
+	// list type json object is unexpected.
+	var listObject []interface{}
+	if json.Unmarshal(bytes, &listObject) == nil {
+		return nil, false
+	}
+	return bytes, true
 }
 
 // Update
-func (c defaultClient) Update(collection string, recordId string, object interface{}) (respondedBody []byte, updated bool) {
+func (c DefaultClient) Update(collection string, recordId string, object interface{}) (respondedBody []byte, updated bool) {
 	resp, err := c.doRequest("PUT", collection, recordId, object)
 	if err != nil {
 		log.Fatal("Update failed. | ", err)
@@ -79,7 +85,7 @@ func (c defaultClient) Update(collection string, recordId string, object interfa
 }
 
 // Delete
-func (c defaultClient) Delete(collection string, recordId string) (respondedBody []byte, deleted bool) {
+func (c DefaultClient) Delete(collection string, recordId string) (respondedBody []byte, deleted bool) {
 	resp, err := c.doRequest("DELETE", collection, recordId, nil)
 	if err != nil {
 		log.Fatal("Delete failed. | ", err)
@@ -90,7 +96,7 @@ func (c defaultClient) Delete(collection string, recordId string) (respondedBody
 	return readAsBytes(resp), true
 }
 
-func (c defaultClient) doRequest(httpMethod string, collection string, recordId string, object interface{}) (*http.Response, error) {
+func (c DefaultClient) doRequest(httpMethod string, collection string, recordId string, object interface{}) (*http.Response, error) {
 	var body io.Reader = nil
 	if object != nil {
 		requestBody := toJsonString(object)
