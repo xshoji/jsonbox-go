@@ -16,7 +16,7 @@ go get "github.com/xshoji/jsonbox-go"
 ```go
 baseUrl := "https://jsonbox.io/"
 boxId := "box_xxxxxxxxxx"
-client := jsonboxgo.NewClient(baseUrl, boxId)
+client := jsonboxgo.NewClient(baseUrl, boxId, http.DefaultClient)
 ```
 
 ## CRUD operation
