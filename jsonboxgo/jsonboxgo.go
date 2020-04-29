@@ -162,15 +162,15 @@ func handleSuffixAndPrefix(char string) string {
 }
 
 type QueryBuilder interface {
-	Limit(int) QueryBuilder
 	Offset(int) QueryBuilder
+	Limit(int) QueryBuilder
 	SortAsc(string) QueryBuilder
 	SortDesc(string) QueryBuilder
-	AddEqual(string, string) QueryBuilder
-	AddGreaterThan(string, string) QueryBuilder
-	AddGreaterThanOrEqual(string, string) QueryBuilder
-	AddLessThan(string, string) QueryBuilder
-	AddLessThanOrEqual(string, string) QueryBuilder
+	AndEqual(string, string) QueryBuilder
+	AndGreaterThan(string, string) QueryBuilder
+	AndGreaterThanOrEqual(string, string) QueryBuilder
+	AndLessThan(string, string) QueryBuilder
+	AndLessThanOrEqual(string, string) QueryBuilder
 	Build() string
 }
 
@@ -188,13 +188,13 @@ func NewQueryBuilder() QueryBuilder {
 	return builder
 }
 
-func (d *DefaultQueryBuilder) Limit(limit int) QueryBuilder {
-	d.queries = append(d.queries, `limit=`+strconv.Itoa(limit))
+func (d *DefaultQueryBuilder) Offset(offset int) QueryBuilder {
+	d.queries = append(d.queries, `offset=`+strconv.Itoa(offset))
 	return d
 }
 
-func (d *DefaultQueryBuilder) Offset(offset int) QueryBuilder {
-	d.queries = append(d.queries, `offset=`+strconv.Itoa(offset))
+func (d *DefaultQueryBuilder) Limit(limit int) QueryBuilder {
+	d.queries = append(d.queries, `limit=`+strconv.Itoa(limit))
 	return d
 }
 
@@ -208,23 +208,23 @@ func (d *DefaultQueryBuilder) SortDesc(sort string) QueryBuilder {
 	return d
 }
 
-func (d *DefaultQueryBuilder) AddGreaterThan(field string, value string) QueryBuilder {
+func (d *DefaultQueryBuilder) AndGreaterThan(field string, value string) QueryBuilder {
 	return d.addFilter(field, ":>", value)
 }
 
-func (d *DefaultQueryBuilder) AddLessThan(field string, value string) QueryBuilder {
+func (d *DefaultQueryBuilder) AndLessThan(field string, value string) QueryBuilder {
 	return d.addFilter(field, ":<", value)
 }
 
-func (d *DefaultQueryBuilder) AddGreaterThanOrEqual(field string, value string) QueryBuilder {
+func (d *DefaultQueryBuilder) AndGreaterThanOrEqual(field string, value string) QueryBuilder {
 	return d.addFilter(field, ":>=", value)
 }
 
-func (d *DefaultQueryBuilder) AddLessThanOrEqual(field string, value string) QueryBuilder {
+func (d *DefaultQueryBuilder) AndLessThanOrEqual(field string, value string) QueryBuilder {
 	return d.addFilter(field, ":<=", value)
 }
 
-func (d *DefaultQueryBuilder) AddEqual(field string, value string) QueryBuilder {
+func (d *DefaultQueryBuilder) AndEqual(field string, value string) QueryBuilder {
 	return d.addFilter(field, ":=", value)
 }
 

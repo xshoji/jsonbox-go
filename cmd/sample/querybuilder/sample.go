@@ -49,10 +49,10 @@ func main() {
 		collection,
 		jsonboxgo.
 			NewQueryBuilder().
-			Limit(3).
 			Offset(1).
+			Limit(3).
 			SortAsc("age").
-			AddGreaterThanOrEqual("age", "40"),
+			AndGreaterThanOrEqual("age", "40"),
 	)
 	fmt.Println(string(result))
 }
