@@ -100,7 +100,7 @@ fmt.Println(string(result))
 // {"message":"Record removed."}
 ```
 
-## Read by Query operation
+## Read by query operation
 
 ```go
 collection := "users"
@@ -112,8 +112,7 @@ result := client.ReadByQuery(
 		Limit(3).
 		SortAsc("age").
 		AddEqual("country", "JP").
-		AddGreaterThanOrEqual("age", "40").
-		Build(),
+		AddGreaterThanOrEqual("age", "40")
 )
 fmt.Println(string(result))
 // [

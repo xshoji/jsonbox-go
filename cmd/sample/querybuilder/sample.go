@@ -52,8 +52,7 @@ func main() {
 			Limit(3).
 			Offset(1).
 			SortAsc("age").
-			AddGreaterThanOrEqual("age", "40").
-			Build(),
+			AddGreaterThanOrEqual("age", "40"),
 	)
 	fmt.Println(string(result))
 }

@@ -14,7 +14,7 @@ type Client interface {
 	Create(string, interface{}) []byte
 	Read(string, string) ([]byte, bool)
 	ReadAll(string) []byte
-	ReadByQuery(string, string) []byte
+	ReadByQuery(string, QueryBuilder) []byte
 	Update(string, string, interface{}) ([]byte, bool)
 	Delete(string, string) ([]byte, bool)
 }
@@ -56,8 +56,8 @@ func (c DefaultClient) ReadAll(collection string) []byte {
 }
 
 // Read all
-func (c DefaultClient) ReadByQuery(collection string, query string) []byte {
-	resp, err := c.doRequest("GET", collection, "", query, nil)
+func (c DefaultClient) ReadByQuery(collection string, query QueryBuilder) []byte {
+	resp, err := c.doRequest("GET", collection, "", query.Build(), nil)
 	if err != nil {
 		log.Fatal("ReadByQuery failed. | ", err)
 	}
