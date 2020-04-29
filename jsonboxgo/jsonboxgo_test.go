@@ -19,19 +19,30 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 	}
 }
 
-func CreateNewTestClient(statusCode int, respondedBody string) *http.Client {
+func CreateNewTestClient(statusCode int, respondedBody string, statusCodeSecond int, respondedBodySecond string) *http.Client {
 	// > Unit Testing http client in Go ｜ hassansin
 	// > http://hassansin.github.io/Unit-Testing-http-client-in-Go
-	return NewTestClient(func(req *http.Request) *http.Response {
+	return NewTestClient(func() func(*http.Request) *http.Response {
+		counter := 0
 		// Test request parameters
-		return &http.Response{
-			StatusCode: statusCode,
-			// Send response to be tested
-			Body: ioutil.NopCloser(bytes.NewBufferString(respondedBody)),
-			// Must be set to non-nil value or it panics
-			Header: make(http.Header),
+		return func(req *http.Request) *http.Response {
+			createResponse := func(code int, body string) *http.Response {
+				return &http.Response{
+					StatusCode: code,
+					// Send response to be tested
+					Body: ioutil.NopCloser(bytes.NewBufferString(body)),
+					// Must be set to non-nil value or it panics
+					Header: make(http.Header),
+				}
+			}
+			if counter == 0 {
+				counter++
+				return createResponse(statusCode, respondedBody)
+			}
+			// counter > 0
+			return createResponse(statusCodeSecond, respondedBodySecond)
 		}
-	})
+	}())
 }
 
 type User struct {
@@ -106,7 +117,7 @@ func TestCreate(t *testing.T) {
 	// run
 	for testCase, param := range testCases {
 		t.Run(testCase, func(t *testing.T) {
-			mockHttpClient := CreateNewTestClient(200, param.InputRespondedBody)
+			mockHttpClient := CreateNewTestClient(200, param.InputRespondedBody, 0, ``)
 			client := NewClient(InputBaseUrl, InputBoxId, mockHttpClient)
 			defaultClient, _ := client.(DefaultClient)
 			result := defaultClient.Create(param.InputCollection, param.InputObject)
@@ -169,7 +180,7 @@ func TestRead(t *testing.T) {
 	// run
 	for testCase, param := range testCases {
 		t.Run(testCase, func(t *testing.T) {
-			mockHttpClient := CreateNewTestClient(param.InputRespondedHttpStatus, param.InputRespondedBody)
+			mockHttpClient := CreateNewTestClient(param.InputRespondedHttpStatus, param.InputRespondedBody, 0, ``)
 			client := NewClient(InputBaseUrl, InputBoxId, mockHttpClient)
 			defaultClient, _ := client.(DefaultClient)
 			result, found := defaultClient.Read(param.InputCollection, param.InputObject.Id)
@@ -221,7 +232,7 @@ func TestReadAll(t *testing.T) {
 	// run
 	for testCase, param := range testCases {
 		t.Run(testCase, func(t *testing.T) {
-			mockHttpClient := CreateNewTestClient(param.InputRespondedHttpStatus, param.InputRespondedBody)
+			mockHttpClient := CreateNewTestClient(param.InputRespondedHttpStatus, param.InputRespondedBody, 0, ``)
 			client := NewClient(InputBaseUrl, InputBoxId, mockHttpClient)
 			defaultClient, _ := client.(DefaultClient)
 			result := defaultClient.ReadAll(param.InputCollection)
@@ -234,6 +245,75 @@ func TestReadAll(t *testing.T) {
 			expected := param.ExpectedUrlFull
 			if actual != expected {
 				t.Errorf("  Failed: actual -> %v(%T), expected -> %v(%T)\n", actual, actual, expected, expected)
+			}
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	// test cases
+	InputBaseUrl := "https://test.com"
+	InputBoxId := "box_test"
+	testCases := map[string]struct {
+		InputCollection                string
+		InputObject                    User
+		InputRespondedHttpStatus       int
+		InputRespondedBody             string
+		InputRespondedHttpStatusSecond int
+		InputRespondedBodySecond       string
+		ExpectedRespondedBody          string
+		ExpectedUrlFull                string
+		ExpectedUpdated                bool
+	}{
+		"Updated case.": {
+			InputCollection:                "users",
+			InputObject:                    User{Id: `id001`, Name: `taro`},
+			InputRespondedHttpStatus:       200,
+			InputRespondedBody:             `{"message":"Record updated."}`,
+			InputRespondedHttpStatusSecond: 200,
+			InputRespondedBodySecond:       `{"_id":"id001","name":"taro"}`,
+			ExpectedRespondedBody:          `{"_id":"id001","name":"taro"}`,
+			ExpectedUrlFull:                "https://test.com/box_test",
+			ExpectedUpdated:                true,
+		},
+		"Not found case.": {
+			InputCollection:                "users",
+			InputObject:                    User{Id: `id001`, Name: `taro`},
+			InputRespondedHttpStatus:       400,
+			InputRespondedBody:             `{"message":"Invalid record Id"}`,
+			InputRespondedHttpStatusSecond: 0,
+			InputRespondedBodySecond:       ``,
+			ExpectedRespondedBody:          ``,
+			ExpectedUrlFull:                "https://test.com/box_test",
+			ExpectedUpdated:                false,
+		},
+	}
+
+	// run
+	for testCase, param := range testCases {
+		t.Run(testCase, func(t *testing.T) {
+			mockHttpClient := CreateNewTestClient(
+				param.InputRespondedHttpStatus,
+				param.InputRespondedBody,
+				param.InputRespondedHttpStatusSecond,
+				param.InputRespondedBodySecond,
+			)
+			client := NewClient(InputBaseUrl, InputBoxId, mockHttpClient)
+			defaultClient, _ := client.(DefaultClient)
+			result, updated := defaultClient.Update(param.InputCollection, param.InputObject.Id, param.InputObject)
+			actual := string(result)
+			expectedBody := param.ExpectedRespondedBody
+			if actual != expectedBody {
+				t.Errorf("  Failed: actual -> %v(%T), expectedBody -> %v(%T)\n", actual, actual, expectedBody, expectedBody)
+			}
+			actual = defaultClient.baseUrlFull
+			expected := param.ExpectedUrlFull
+			if actual != expected {
+				t.Errorf("  Failed: actual -> %v(%T), expected -> %v(%T)\n", actual, actual, expected, expected)
+			}
+			expectedUpdated := param.ExpectedUpdated
+			if updated != expectedUpdated {
+				t.Errorf("  Failed: updated -> %v(%T), expectedUpdated -> %v(%T)\n", updated, updated, expectedUpdated, expectedUpdated)
 			}
 		})
 	}
