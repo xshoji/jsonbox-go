@@ -1,4 +1,3 @@
-//go:generate mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
 package jsonboxgo
 
 import (
@@ -7,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -14,6 +14,7 @@ type Client interface {
 	Create(string, interface{}) []byte
 	Read(string, string) ([]byte, bool)
 	ReadAll(string) []byte
+	ReadByQuery(string, string) []byte
 	Update(string, string, interface{}) ([]byte, bool)
 	Delete(string, string) ([]byte, bool)
 }
@@ -25,7 +26,97 @@ type DefaultClient struct {
 	httpClient  *http.Client
 }
 
-// Create new jsonbox-go client
+type QueryBuilder interface {
+	Limit(int) QueryBuilder
+	Offset(int) QueryBuilder
+	SortAsc(string) QueryBuilder
+	SortDesc(string) QueryBuilder
+	AddEqual(string, string) QueryBuilder
+	AddGreaterThan(string, string) QueryBuilder
+	AddGreaterThanOrEqual(string, string) QueryBuilder
+	AddLessThan(string, string) QueryBuilder
+	AddLessThanOrEqual(string, string) QueryBuilder
+	Build() string
+}
+
+type DefaultQueryBuilder struct {
+	queries []string
+	filters []string
+}
+
+func (d *DefaultQueryBuilder) Limit(limit int) QueryBuilder {
+	d.queries = append(d.queries, `limit=`+strconv.Itoa(limit))
+	return d
+}
+
+func (d *DefaultQueryBuilder) Offset(offset int) QueryBuilder {
+	d.queries = append(d.queries, `offset=`+strconv.Itoa(offset))
+	return d
+}
+
+func (d *DefaultQueryBuilder) SortAsc(sort string) QueryBuilder {
+	d.queries = append(d.queries, `sort=`+sort)
+	return d
+}
+
+func (d *DefaultQueryBuilder) SortDesc(sort string) QueryBuilder {
+	d.queries = append(d.queries, `sort=-`+sort)
+	return d
+}
+
+func (d *DefaultQueryBuilder) AddGreaterThan(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":>", value)
+}
+
+func (d *DefaultQueryBuilder) AddLessThan(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":<", value)
+}
+
+func (d *DefaultQueryBuilder) AddGreaterThanOrEqual(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":>=", value)
+}
+
+func (d *DefaultQueryBuilder) AddLessThanOrEqual(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":<=", value)
+}
+
+func (d *DefaultQueryBuilder) AddEqual(field string, value string) QueryBuilder {
+	return d.addFilter(field, ":=", value)
+}
+
+func (d *DefaultQueryBuilder) addFilter(name string, operator string, value string) QueryBuilder {
+	filterQuery := ""
+	if len(d.filters) == 0 {
+		filterQuery += "q="
+	}
+	d.filters = append(d.filters, filterQuery+name+operator+value)
+	return d
+}
+
+func (d *DefaultQueryBuilder) Build() string {
+	query := ""
+	if len(d.queries) > 0 {
+		query += strings.Join(d.queries, `&`)
+	}
+	if len(d.filters) > 0 {
+		if query != "" {
+			query += "&"
+		}
+		query += strings.Join(d.filters, `,`)
+	}
+	return "?" + query
+}
+
+// Create new jsonbox-go QueryBuilder
+func NewQueryBuilder() QueryBuilder {
+	builder := &DefaultQueryBuilder{
+		queries: make([]string, 0),
+		filters: make([]string, 0),
+	}
+	return builder
+}
+
+// Create new jsonbox-go Client
 func NewClient(baseUrl string, boxId string, httpClient *http.Client) Client {
 	client := DefaultClient{
 		baseUrl:     baseUrl,
@@ -38,7 +129,7 @@ func NewClient(baseUrl string, boxId string, httpClient *http.Client) Client {
 
 // Create
 func (c DefaultClient) Create(collection string, object interface{}) []byte {
-	resp, err := c.doRequest("POST", collection, "", object)
+	resp, err := c.doRequest("POST", collection, "", "", object)
 	if err != nil {
 		log.Fatal("Create failed. | ", err)
 	}
@@ -47,16 +138,25 @@ func (c DefaultClient) Create(collection string, object interface{}) []byte {
 
 // Read all
 func (c DefaultClient) ReadAll(collection string) []byte {
-	resp, err := c.doRequest("GET", collection, "", nil)
+	resp, err := c.doRequest("GET", collection, "", "", nil)
 	if err != nil {
 		log.Fatal("ReadAll failed. | ", err)
 	}
 	return readAsBytes(resp)
 }
 
+// Read all
+func (c DefaultClient) ReadByQuery(collection string, query string) []byte {
+	resp, err := c.doRequest("GET", collection, "", query, nil)
+	if err != nil {
+		log.Fatal("ReadByQuery failed. | ", err)
+	}
+	return readAsBytes(resp)
+}
+
 // Read one
 func (c DefaultClient) Read(collection string, recordId string) (respondedBody []byte, found bool) {
-	resp, err := c.doRequest("GET", collection, recordId, nil)
+	resp, err := c.doRequest("GET", collection, recordId, "", nil)
 	if err != nil {
 		log.Fatal("Read failed. | ", err)
 	}
@@ -74,7 +174,7 @@ func (c DefaultClient) Read(collection string, recordId string) (respondedBody [
 
 // Update
 func (c DefaultClient) Update(collection string, recordId string, object interface{}) (respondedBody []byte, updated bool) {
-	resp, err := c.doRequest("PUT", collection, recordId, object)
+	resp, err := c.doRequest("PUT", collection, recordId, "", object)
 	if err != nil {
 		log.Fatal("Update failed. | ", err)
 	}
@@ -86,7 +186,7 @@ func (c DefaultClient) Update(collection string, recordId string, object interfa
 
 // Delete
 func (c DefaultClient) Delete(collection string, recordId string) (respondedBody []byte, deleted bool) {
-	resp, err := c.doRequest("DELETE", collection, recordId, nil)
+	resp, err := c.doRequest("DELETE", collection, recordId, "", nil)
 	if err != nil {
 		log.Fatal("Delete failed. | ", err)
 	}
@@ -96,13 +196,13 @@ func (c DefaultClient) Delete(collection string, recordId string) (respondedBody
 	return readAsBytes(resp), true
 }
 
-func (c DefaultClient) doRequest(httpMethod string, collection string, recordId string, object interface{}) (*http.Response, error) {
+func (c DefaultClient) doRequest(httpMethod string, collection string, recordId string, query string, object interface{}) (*http.Response, error) {
 	var body io.Reader = nil
 	if object != nil {
 		requestBody := toJsonString(object)
 		body = strings.NewReader(requestBody)
 	}
-	req, err := http.NewRequest(httpMethod, c.baseUrlFull+handleSuffixAndPrefix(collection)+handleSuffixAndPrefix(recordId), body)
+	req, err := http.NewRequest(httpMethod, c.baseUrlFull+handleSuffixAndPrefix(collection)+handleSuffixAndPrefix(recordId)+query, body)
 	if err != nil {
 		log.Fatal(`http.NewRequest("`+httpMethod+`") failed. | `, err)
 	}
